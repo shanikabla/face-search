@@ -1,5 +1,10 @@
-data/
+data/*
+!data/.gitkeep
 __pycache__/
 *.pyc
 .env
 logs/
+
+# Query images for face_matcher.py (third-party photos, not committed)
+queries/*
+!queries/.gitkeep

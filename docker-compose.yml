@@ -47,8 +47,8 @@ services:
       - postgres_data:/var/lib/postgresql/data
       # Runs once, on first start (empty volume): creates the "faces" DB + pgvector
       - ./db/init.sh:/docker-entrypoint-initdb.d/init.sh:ro
-    ports:
-      - "5432:5432"
+    # No host port on purpose: avoids clashing with a local Postgres on 5432.
+    # Inspect with: docker compose exec postgres psql -U faces faces
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
       interval: 5s
@@ -86,6 +86,22 @@ services:
       <<: *airflow-depends
       airflow-init:
         condition: service_completed_successfully
+
+  # Search CLI, not started by "up" (profile). Usage:
+  #   docker compose run --rm face-matcher queries/person.jpg
+  face-matcher:
+    <<: *airflow-common
+    profiles: ["tools"]
+    working_dir: /opt/airflow/project
+    entrypoint: ["python", "face_matcher.py"]
+    environment:
+      <<: *airflow-env
+      PYTHONPATH: /opt/airflow/project
+    volumes:
+      - .:/opt/airflow/project
+      # Same path as in the pipeline, so images.file_path resolves (used by scripts/)
+      - ./data:/opt/airflow/data
+      - deepface_weights:/opt/airflow/deepface_home
 
 volumes:
   postgres_data:
