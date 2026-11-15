@@ -31,7 +31,7 @@ space (the image includes TensorFlow).
 git clone <this repo> face-search && cd face-search
 cp .env.example .env          # then replace each "change-me" (e.g. openssl rand -hex 32)
                               # on Linux, also set AIRFLOW_UID=$(id -u)
-docker compose up -d --build  # first build takes 5-10 min (TensorFlow, DeepFace)
+docker compose up -d --build  # first build: 10-30 min (TensorFlow, ~2 GB to download)
 ```
 
 Open the Airflow UI at **http://localhost:8080** (no login: local development setup).
@@ -51,8 +51,9 @@ docker compose exec airflow-scheduler airflow dags trigger face_pipeline -c '{"m
 | `max_image_size` | `1024` | Longest side of the normalized images, in pixels |
 
 **Run time:** crawling and downloading are fast. Face detection is the slow part, at about
-**1 s per image on CPU**. With `max_pages: 10`, expect a few minutes. With the defaults,
-several thousand images and about an hour.
+**1 s per image on CPU**, and the first run also downloads the model weights. Measured:
+`max_pages: 2` gave ~540 images in ~10 min (a good quick test), and `max_pages: 30` gave ~4,300
+images in about 75 min. The default (50) is larger.
 
 The pipeline is **idempotent and resumable**: re-running it never creates duplicates, and an
 interrupted run continues where it stopped (each page, image and face set is committed
@@ -204,7 +205,7 @@ pages ──< page_image_urls >── image_urls ──> images ──< faces
   delay between requests and a page limit.
 - **One task per site** with Airflow dynamic task mapping
   (`crawl_site.expand(start_url=...)`). Sites crawl in parallel, and each has its own
-  status, logs and retries. The list goes through a small task because params are only
+  status and logs and can be re-run on its own. The list goes through a small task because params are only
   known at run time, while the DAG file is parsed long before.
 - **HTML is parsed (BeautifulSoup), not regex-matched for `.jpg`**: real image URLs often
   have no extension (CDNs), carry query strings, are `.webp`, relative, or lazy-loaded.
@@ -229,8 +230,8 @@ images are retried on the next run.
 
 ### Face detection: benchmarked on our own images
 
-The 4 detectors of DeepFace on 40 random images from the index
-(`scripts/benchmark_detectors.py`):
+The 4 detectors of DeepFace on 40 random images from the index, which had 501 images at
+the time (`scripts/benchmark_detectors.py`, seed 42):
 
 | Detector | Faces | Images with ≥ 1 face | Faces < 40 px | Speed |
 |---|---|---|---|---|
