@@ -29,10 +29,13 @@ space (the image includes TensorFlow).
 
 ```bash
 git clone <this repo> face-search && cd face-search
-cp .env.example .env          # then replace each "change-me" (e.g. openssl rand -hex 32)
+cp .env.example .env          # works as is for a local run (see below)
                               # on Linux, also set AIRFLOW_UID=$(id -u)
 docker compose up -d --build  # first build: 10-30 min (TensorFlow, ~2 GB to download)
 ```
+
+The `change-me` values in `.env` are fine for a local evaluation: nothing is exposed outside
+Docker. For any shared or deployed setup, replace them (e.g. `openssl rand -hex 32`).
 
 Open the Airflow UI at **http://localhost:8080** (no login: local development setup).
 DAGs are paused when created. Unpause `face_pipeline`, then click **Trigger** and edit the
