@@ -8,7 +8,9 @@ from deepface import DeepFace
 MODEL_NAME = "Facenet512"
 DETECTOR = "retinaface"
 EMBEDDING_DIM = 512
-MIN_CONFIDENCE = 0.9
+# 0.9 let through a puma, hands holding a camera, a carved ornament (see README);
+# 0.98 removes them for only 2% of the faces
+MIN_CONFIDENCE = 0.98
 # Smaller faces carry too little detail for a reliable embedding -> false matches
 MIN_FACE_PX = 40
 
