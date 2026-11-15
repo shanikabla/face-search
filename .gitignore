@@ -8,3 +8,4 @@ logs/
 # Query images for face_matcher.py (third-party photos, not committed)
 queries/*
 !queries/.gitkeep
+.DS_Store
